@@ -11,7 +11,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 # Load and transform data into sets 
-df = pd.read_csv('data.csv')
+df = pd.read_csv('data.csv',
+    names = ["EventID", "x1", "y1", "z1", "x2", "y2", "z2",
+     "Energy1", "Energy2", "dt", "t1", "t2", "pPs"])
 X = df.iloc[:, 1:12]
 y = df.iloc[:, 12]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2)
