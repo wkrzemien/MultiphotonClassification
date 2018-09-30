@@ -5,6 +5,9 @@
 #include <TLorentzVector.h>
 #include "TVector3.h"
 #include <stdlib.h>
+#include "TH1F.h"
+#include "TH2.h"
+#include "TCanvas.h"
 
 using namespace std;
 
@@ -20,6 +23,13 @@ struct gammaTrack {
 };
 
 vector<gammaTrack> data;
+TH1F* timeDiff = new TH1F( "Pairs time differences", "Pairs time differences", 200, 0, 10);
+TH2* pos = new TH2D(
+  /* name */ "XY detected positions",
+  /* title */ "XY detected positions",
+  /* X-dimension */ 1200, -600, 600,
+  /* Y-dimension */ 1200, -600, 600);
+bool createStats = false;
 
 void readEntry(const GlobalActorReader& gar)
 {
@@ -45,8 +55,13 @@ void createCSVFile() {
   bool isPPsEvent = false;
 
   for (vector<gammaTrack>::iterator it = data.begin() ; it != data.end(); ++it) {
+    if (createStats) {
+      pos->Fill(it->x, it->y);
+    }
     for (vector<gammaTrack>::iterator it2 = data.begin() ; it2 != data.end(); ++it2) {
-
+      if (createStats) {
+        timeDiff->Fill(abs(it->time - it2->time));
+      }
       // Condition stand for small time difference applies only to point source
       if (abs(it->time - it2->time) <= 0.1 && it != it2 &&
         (it->trackID != it2->trackID || it->eventID != it2->eventID)) {
@@ -83,10 +98,11 @@ void createCSVFile() {
 
 int main(int argc, char* argv[])
 {
-  if (argc != 2) {
+  if (argc != 3) {
     cerr << "Invalid number of variables." << endl;
   } else {
     string file_name( argv[1] );
+    createStats = argv[2];
 
     try {
       GlobalActorReader gar;
@@ -98,6 +114,16 @@ int main(int argc, char* argv[])
         cerr << "Loading file failed." << endl;
       }
       createCSVFile();
+      if (createStats) {
+        TCanvas c1("c", "c", 2000, 2000);
+        timeDiff->SetLineColor(kBlack);
+        timeDiff->Draw();
+        c1.SaveAs("timeDiff.png");
+        TCanvas c2("c", "c", 2000, 2000);
+        pos->SetLineColor(kBlack);
+        pos->Draw();
+        c2.SaveAs("posXY.png");
+      }
     } catch (const logic_error& e ) {
       cerr << e.what() << endl;
     } catch (...) {
