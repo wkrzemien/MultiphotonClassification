@@ -11,22 +11,28 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 # Load and transform data into sets 
+codes = {'detector1':1, 'detector2':2, 'detector3':3}
 df = pd.read_csv('data.csv',
     names = ["EventID", "x1", "y1", "z1", "x2", "y2", "z2",
-     "Energy1", "Energy2", "dt", "t1", "t2", "pPs"])
-X = df.iloc[:, 1:12]
-y = df.iloc[:, 12]
+     "Energy1", "Energy2", "dt", "t1", "t2", "vol1", "vol2", "pPs"])
+
+df['vol1'] = df['vol1'].map(codes)
+df['vol2'] = df['vol2'].map(codes)
+
+print(df.head())
+X = df.iloc[:, 1:14]
+y = df.iloc[:, 14]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2)
-X_test_with_times = X_test.iloc[:, 0:11]
-X_test = X_test.iloc[:, 0:9]
-X_train = X_train.iloc[:, 0:9]
+X_test_with_times = X_test.iloc[:, 0:13]
+X_train.drop(['t1', 't2'], axis=1, inplace=True)
+X_test.drop(['t1', 't2'], axis=1, inplace=True)
 
 # Initializing Neural Network
 classifier = Sequential()
 
 # Adding the first hidden layer
 classifier.add(
-    Dense(output_dim = 12, init = 'uniform', activation = 'relu', input_dim = 9)
+    Dense(output_dim = 12, init = 'uniform', activation = 'relu', input_dim = 11)
 )
 
 # Adding the second hidden layer
@@ -70,40 +76,43 @@ FN = pd.merge(pPsPredictedNegative,pPsOrginalPositive, how='inner')
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
+def emissionPoint(row):
+    den = row['t1']+row['t2']
+    return { 
+        'x':(row['x1']*row['t2']+row['x2']*row['t1'])/den,
+        'y':(row['y1']*row['t2']+row['y2']*row['t1'])/den,
+        'z':(row['z1']*row['t2']+row['z2']*row['t1'])/den,
+    }
+
 # Add data to the plot
 for index, row in TP.iterrows():
+    point = emissionPoint(row)
     ax.scatter(
-        xs=[(row[0]*row[10]+row[3]*row[9])/(row[10]+row[9])],
-        ys=[(row[1]*row[10]+row[4]*row[9])/(row[10]+row[9])], 
-        zs=[(row[2]*row[10]+row[5]*row[9])/(row[10]+row[9])],
-        c="green",
+        xs=point['x'], ys=point['y'], zs=point['z'], c="green",
         label='TP' if index == TP.first_valid_index() else ""
     )
+    if (row['vol1'] == 1 and row['vol2'] == 1):
+        print(point)
 
 for index, row in FP.iterrows():
+    point = emissionPoint(row)
     ax.scatter(
-        xs=[(row[0]*row[10]+row[3]*row[9])/(row[10]+row[9])],
-        ys=[(row[1]*row[10]+row[4]*row[9])/(row[10]+row[9])], 
-        zs=[(row[2]*row[10]+row[5]*row[9])/(row[10]+row[9])],
-        c="red",
+        xs=point['x'], ys=point['y'], zs=point['z'], c="red",
         label='FP' if index == FP.first_valid_index() else ""
     )
 
+
 for index, row in FN.iterrows():
+    point = emissionPoint(row)
     ax.scatter(
-        xs=[(row[0]*row[10]+row[3]*row[9])/(row[10]+row[9])],
-        ys=[(row[1]*row[10]+row[4]*row[9])/(row[10]+row[9])], 
-        zs=[(row[2]*row[10]+row[5]*row[9])/(row[10]+row[9])],
-        c="blue",
+        xs=point['x'], ys=point['y'], zs=point['z'], c="blue",
         label='FN' if index == FN.first_valid_index() else ""
     )
 
 for index, row in TN.iterrows():
+    point = emissionPoint(row)
     ax.scatter(
-        xs=[(row[0]*row[10]+row[3]*row[9])/(row[10]+row[9])],
-        ys=[(row[1]*row[10]+row[4]*row[9])/(row[10]+row[9])], 
-        zs=[(row[2]*row[10]+row[5]*row[9])/(row[10]+row[9])],
-        c="yellow",
+        xs=point['x'], ys=point['y'], zs=point['z'], c="yellow",
         label='TN' if index == TN.first_valid_index() else ""
     )
 
