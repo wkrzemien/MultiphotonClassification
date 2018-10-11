@@ -9,23 +9,24 @@ from sklearn.preprocessing import StandardScaler
 import math
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from calc import emissionPoint
 
 # Load and transform data into sets 
 codes = {'detector1':1, 'detector2':2, 'detector3':3}
 df = pd.read_csv('data.csv',
-    names = ["EventID", "x1", "y1", "z1", "x2", "y2", "z2",
-     "Energy1", "Energy2", "dt", "t1", "t2", "vol1", "vol2", "pPs"])
+    names = ["EventID1", "EventID2", "TrackID1", "TrackID2", "x1", "y1", "z1", "x2", "y2", "z2",
+     "e1", "e2", "dt", "t1", "t2", "vol1", "vol2", "pPs"])
 
 df['vol1'] = df['vol1'].map(codes)
 df['vol2'] = df['vol2'].map(codes)
 
 print(df.head())
-X = df.iloc[:, 1:14]
-y = df.iloc[:, 14]
+X = df.drop(['pPs'], axis=1)
+y = df[["pPs"]]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2)
-X_test_with_times = X_test.iloc[:, 0:13]
-X_train.drop(['t1', 't2'], axis=1, inplace=True)
-X_test.drop(['t1', 't2'], axis=1, inplace=True)
+X_test_with_times = X_test.copy()
+X_train.drop(['t1', 't2', "EventID1", "EventID2", "TrackID1", "TrackID2"], axis=1, inplace=True)
+X_test.drop(['t1', 't2', "EventID1", "EventID2", "TrackID1", "TrackID2"], axis=1, inplace=True)
 
 # Initializing Neural Network
 classifier = Sequential()
@@ -51,7 +52,7 @@ classifier.compile(
 )
 
 # Fitting our model 
-classifier.fit(X_train, y_train, batch_size = 1000, nb_epoch = 1000)
+classifier.fit(X_train, y_train, batch_size = 1000, nb_epoch = 1)
 
 # Predicting the Test set results
 y_pred = classifier.predict(X_test)
@@ -73,16 +74,8 @@ TN = pd.merge(pPsPredictedNegative,pPsOrginalNegative, how='inner')
 FN = pd.merge(pPsPredictedNegative,pPsOrginalPositive, how='inner')
 
 # Initialize plot
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
-def emissionPoint(row):
-    den = row['t1']+row['t2']
-    return { 
-        'x':(row['x1']*row['t2']+row['x2']*row['t1'])/den,
-        'y':(row['y1']*row['t2']+row['y2']*row['t1'])/den,
-        'z':(row['z1']*row['t2']+row['z2']*row['t1'])/den,
-    }
+fig1 = plt.figure()
+ax = fig1.add_subplot(111, projection='3d')
 
 # Add data to the plot
 for index, row in TP.iterrows():
@@ -121,5 +114,43 @@ ax.set_ylabel('y [mm]')
 ax.set_zlabel('z [mm]')
 ax.legend(loc='lower left')
 plt.title('pPs point source - JPET simulation recostrucion')
-
 plt.show()
+
+# Stats for all particles considered
+allStatsFrame = df[["EventID1","TrackID1","e1","x1", "y1", "z1", "t1"]].drop_duplicates()
+
+# All particles energy stats
+figAll1 = plt.figure()
+plt.hist(allStatsFrame[["e1"]].transpose(), bins=20)
+plt.title('Energy loss - all particles')
+plt.xlabel('Energy [keV]')
+plt.ylabel('#')
+plt.savefig('allEnergy.png')
+# All particles t stats
+figAll2 = plt.figure()
+plt.hist(allStatsFrame[["t1"]].transpose(), bins=20)
+plt.title('Detection time - all particles')
+plt.xlabel('time [ns]')
+plt.ylabel('#')
+plt.savefig('allTime.png')
+# All particles x stats
+figAll3 = plt.figure()
+plt.hist(allStatsFrame[["x1"]].transpose(), bins=20)
+plt.title('X position - all particles')
+plt.xlabel('Position [mm]')
+plt.ylabel('#')
+plt.savefig('allX.png')
+# All particles y stats
+figAll4 = plt.figure()
+plt.hist(allStatsFrame[["y1"]].transpose(), bins=20)
+plt.title('Y position - all particles')
+plt.xlabel('Position [mm]')
+plt.ylabel('#')
+plt.savefig('allY.png')
+# All particles z stats
+figAll5 = plt.figure()
+plt.hist(allStatsFrame[["e1"]].transpose(), bins=20)
+plt.title('Z position - all particles')
+plt.xlabel('Position [mm]')
+plt.ylabel('#')
+plt.savefig('allZ.png')

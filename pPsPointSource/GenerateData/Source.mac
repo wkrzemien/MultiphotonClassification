@@ -18,10 +18,10 @@
 /gate/source/PointSource/gps/type Point
 /gate/source/PointSource/gps/pos/centre 0 0 0 cm
 /gate/source/PointSource/setActivity 1 kBq
-/gate/source/PointSource/setType pPsAndPropmtJPET
+/gate/source/PointSource/setType pPsJPET
 /gate/source/PointSource/setUseUnpolarizedParticles FALSE
 /gate/source/PointSource/setSeedForRandomGenerator 10
-/gate/source/PointSource/setPromptGammaEnergy 1.157 MeV
+# /gate/source/PointSource/setPromptGammaEnergy 1.157 MeV
 /gate/source/PointSource/gps/particle gamma
 
 # This options control distribution of gammas momentum directions

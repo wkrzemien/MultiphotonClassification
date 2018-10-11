@@ -26,12 +26,29 @@ struct gammaTrack {
 vector<gammaTrack> data;
 TH1F* timeDiff = new TH1F( "Pairs time differences", "Pairs time differences", 200, 0, 10000000);
 TH1F* timeDiff2 = new TH1F( "Pairs time differences", "Pairs time differences", 200, 0, 0.5);
-TH2* pos = new TH2D(
-  /* name */ "XY detected positions",
-  /* title */ "XY detected positions",
-  /* X-dimension */ 1200, -600, 600,
-  /* Y-dimension */ 1200, -600, 600);
+TH2* pos = new TH2D("XY", "XY", 1200, -600, 600, 1200, -600, 600);
 bool createStats = false;
+
+void saveEntry(gammaTrack &gt1, gammaTrack &gt2, bool isPPsEvent, ofstream &outputFile) {
+  outputFile  << gt1.eventID << ","
+              << gt2.eventID << ","
+              << gt1.trackID << ","
+              << gt2.trackID << ","
+              << setprecision (40) <<gt1.x << ","
+              << gt1.y << ","
+              << gt1.z << ","
+              << gt2.x << "," 
+              << gt2.y << ","
+              << gt2.z << "," 
+              << gt1.energy << "," 
+              << gt2.energy << ","
+              << gt1.time - gt2.time << ","
+              << gt1.time << ","
+              << gt2.time << ","
+              << gt1.volume << ","
+              << gt2.volume << ","
+              << int(isPPsEvent) << endl; 
+}
 
 void readEntry(const GlobalActorReader& gar)
 {
@@ -66,7 +83,9 @@ void createCSVFile() {
         timeDiff2->Fill(abs(it->time - it2->time));
       }
       // Condition stand for small time difference applies only to point source
+      // Energy condition to cut prompt gammas
       if (abs(it->time - it2->time) <= 0.1 && it != it2 &&
+        it->energy <= 511 && it2->energy <= 511 &&
         (it->trackID != it2->trackID || it->eventID != it2->eventID)) {
         pair <int,int> ex = make_pair(it->eventID, it->trackID);
 
@@ -81,37 +100,9 @@ void createCSVFile() {
           );
         }
 
-        outputFile  << it->eventID << ","
-                << setprecision (40) <<it->x << ","
-                << it->y << ","
-                << it->z << ","
-                << it2->x << "," 
-                << it2->y << ","
-                << it2->z << "," 
-                << it->energy << "," 
-                << it2->energy << ","
-                << it->time - it2->time << ","
-                << it->time << ","
-                << it2->time << ","
-                << it->volume << ","
-                << it2->volume << ","
-                << int(isPPsEvent) << endl; 
-        // Symetrical case
-        outputFile  << it->eventID << ","
-                << it2->x << ","
-                << it2->y << ","
-                << it2->z << ","
-                << it->x << "," 
-                << it->y << ","
-                << it->z << "," 
-                << it2->energy << "," 
-                << it->energy << ","
-                << it2->time - it->time << ","
-                << it2->time << ","
-                << it->time << ","
-                << it2->volume << ","
-                << it->volume << ","
-                << int(isPPsEvent) << endl; 
+        saveEntry(*it, *it2, isPPsEvent, outputFile);
+        //Symmetrical case
+        saveEntry(*it2, *it, isPPsEvent, outputFile);
       }
     }
   }   

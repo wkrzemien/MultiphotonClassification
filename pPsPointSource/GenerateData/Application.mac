@@ -14,7 +14,7 @@
 # Example: if you have source with activity 1kBq you will receive 10^5 events
 #==========================================================================================
 
-/gate/application/setTotalNumberOfPrimaries 200000
+/gate/application/setTotalNumberOfPrimaries 1000000
 
 #==========================================================================================
 # Way no 2: By describing simulation time and length of time step.
