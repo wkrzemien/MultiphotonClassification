@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from calc import emissionPoint
 from calc import loadDataFrames
+from calc import reconstruction
 
 # Load and transform data into sets 
 df, X_train, X_test, y_train, y_test, X_test_with_times = loadDataFrames('data.csv')
@@ -38,7 +39,7 @@ classifier.compile(
 )
 
 # Fitting our model 
-classifier.fit(X_train, y_train, batch_size = 1000, nb_epoch = 1)
+classifier.fit(X_train, y_train, batch_size = 1000, nb_epoch = 1000)
 
 # Predicting the Test set results
 y_pred = classifier.predict(X_test)
@@ -59,48 +60,7 @@ TP = pd.merge(pPsPredictedPositive,pPsOrginalPositive, how='inner')
 TN = pd.merge(pPsPredictedNegative,pPsOrginalNegative, how='inner')
 FN = pd.merge(pPsPredictedNegative,pPsOrginalPositive, how='inner')
 
-# Initialize plot
-fig1 = plt.figure()
-ax = fig1.add_subplot(111, projection='3d')
-
-# Add data to the plot
-for index, row in TP.iterrows():
-    point = emissionPoint(row)
-    ax.scatter(
-        xs=point['x'], ys=point['y'], zs=point['z'], c="green",
-        label='TP' if index == TP.first_valid_index() else ""
-    )
-    if (row['vol1'] == 1 and row['vol2'] == 1):
-        print(point)
-
-for index, row in FP.iterrows():
-    point = emissionPoint(row)
-    ax.scatter(
-        xs=point['x'], ys=point['y'], zs=point['z'], c="red",
-        label='FP' if index == FP.first_valid_index() else ""
-    )
-
-
-for index, row in FN.iterrows():
-    point = emissionPoint(row)
-    ax.scatter(
-        xs=point['x'], ys=point['y'], zs=point['z'], c="blue",
-        label='FN' if index == FN.first_valid_index() else ""
-    )
-
-for index, row in TN.iterrows():
-    point = emissionPoint(row)
-    ax.scatter(
-        xs=point['x'], ys=point['y'], zs=point['z'], c="yellow",
-        label='TN' if index == TN.first_valid_index() else ""
-    )
-
-ax.set_xlabel('x [mm]')
-ax.set_ylabel('y [mm]')
-ax.set_zlabel('z [mm]')
-ax.legend(loc='lower left')
-plt.title('pPs point source - JPET simulation recostrucion')
-plt.show()
+reconstruction(FP, TP, TN, FN)
 
 # Stats for all particles considered
 allStatsFrame = df[["EventID1","TrackID1","e1","x1", "y1", "z1", "t1"]].drop_duplicates()

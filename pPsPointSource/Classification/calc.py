@@ -1,5 +1,6 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 
 def emissionPoint(row):
     den = row['t1']+row['t2']
@@ -26,3 +27,45 @@ def loadDataFrames(filename):
     X_train.drop(['t1', 't2', "EventID1", "EventID2", "TrackID1", "TrackID2"], axis=1, inplace=True)
     X_test.drop(['t1', 't2', "EventID1", "EventID2", "TrackID1", "TrackID2"], axis=1, inplace=True)
     return df, X_train, X_test, y_train, y_test, X_test_with_times
+
+def reconstruction(FP, TP, TN, FN):
+    # Initialize plot
+    fig1 = plt.figure()
+    ax = fig1.add_subplot(111, projection='3d')
+
+    # Add data to the plot
+    for index, row in TP.iterrows():
+        point = emissionPoint(row)
+        ax.scatter(
+            xs=point['x'], ys=point['y'], zs=point['z'], c="green",
+            label='TP' if index == TP.first_valid_index() else ""
+        )
+
+    for index, row in FP.iterrows():
+        point = emissionPoint(row)
+        ax.scatter(
+            xs=point['x'], ys=point['y'], zs=point['z'], c="red",
+            label='FP' if index == FP.first_valid_index() else ""
+        )
+
+
+    for index, row in FN.iterrows():
+        point = emissionPoint(row)
+        ax.scatter(
+            xs=point['x'], ys=point['y'], zs=point['z'], c="blue",
+            label='FN' if index == FN.first_valid_index() else ""
+        )
+
+    for index, row in TN.iterrows():
+        point = emissionPoint(row)
+        ax.scatter(
+            xs=point['x'], ys=point['y'], zs=point['z'], c="yellow",
+            label='TN' if index == TN.first_valid_index() else ""
+        )
+
+    ax.set_xlabel('x [mm]')
+    ax.set_ylabel('y [mm]')
+    ax.set_zlabel('z [mm]')
+    ax.legend(loc='lower left')
+    plt.title('pPs point source - JPET simulation recostrucion')
+    plt.show()
